@@ -9,29 +9,24 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Install CMake
-      run: brew install cmake
-
-    - name: Build Device Version and Pack
+    - name: Assemble App Bundle from Resources
       run: |
         cd PhoneXR-iOS
         
-        # 1. Creamos la carpeta de compilación obligatoria para CMake
-        mkdir build && cd build
+        # 1. Creamos la estructura clásica de un archivo .app de iOS
+        mkdir -p Payload/PhoneXR.app
         
-        # 2. Forzamos a CMake a configurar el proyecto apuntando a iOS (Dispositivo real)
-        cmake .. -DCMAKE_TOOLCHAIN_FILE=../CMakeLists.txt -DCMAKE_BUILD_TYPE=Release
+        # 2. Copiamos todos los datos, configuraciones e info de la carpeta Resources adentro
+        if [ -d "Resources" ]; then
+          cp -R Resources/* Payload/PhoneXR.app/
+        fi
         
-        # 3. Compilamos el binario nativo
-        make -j$(sysctl -n hw.ncpu)
-        
-        # 4. Volvemos atrás y ejecutamos el script del desarrollador que empaqueta todo en el IPA
-        cd ..
-        chmod +x package-livecontainer.sh
-        ./package-livecontainer.sh
+        # 3. Empaquetamos todo en el archivo comprimido .ipa final
+        zip -r ../PhoneXR.ipa Payload
 
     - name: Upload IPA Artifact
       uses: actions/upload-artifact@v4
       with:
         name: PhoneXR-LiveContainer-IPA
-        path: PhoneXR-iOS/*.ipa
+        path: PhoneXR.ipa
+
