@@ -1,0 +1,29 @@
+name: Build iOS IPA
+on:
+  workflow_dispatch: # Esto permite activar la compilación manualmente con un botón
+
+jobs:
+  build:
+    runs-on: macos-latest # GitHub te presta una Mac virtual para compilar
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Xcode
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: 'latest-stable'
+
+    - name: Build IPA
+      run: |
+        # Comandos internos para compilar la carpeta PhoneXR-iOS sin firma estricta
+        xcodebuild -project PhoneXR-iOS/PhoneXR.xcodeproj -scheme PhoneXR -sdk iphoneos -configuration Release CODE_SIGNING_ALLOWED=NO
+        mkdir -p Payload
+        mv build/Release-iphoneos/PhoneXR.app Payload/
+        zip -r PhoneXR.ipa Payload
+
+    - name: Upload IPA Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: PhoneXR-iOS-IPA
+        path: PhoneXR.ipa
